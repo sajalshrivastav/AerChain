@@ -12,13 +12,13 @@ app.use(express.json());
 //Routes
 const RFPs = require('./routes/Rfp.route')
 const Vendors = require('./routes/Vendor.route');
-// const Email = require('./routes/Email.route');
+const Email = require('./routes/Email.route');
 
 const PORT = process.env.PORT || 5000;
 
 app.use('/api/rfps', RFPs);
 app.use('/api/vendors', Vendors);
-// app.use('/api/email', Email);
+app.use('/api/email', Email);
 
 const startServer = async () => {
     await connectDB();
