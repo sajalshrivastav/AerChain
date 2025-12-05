@@ -5,16 +5,12 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const AI_MODEL = process.env.AI_MODEL || 'openai/gpt-4o';
 const AI_MODEL_MINI = process.env.AI_MODEL_MINI || 'openai/gpt-4o-mini';
 
-// Validate API key on startup
-if (!OPENROUTER_API_KEY) {
-    console.error('WARNING: OPENROUTER_API_KEY is not set in .env file');
-}
 
 const callOpenRouter = async (messages, model = AI_MODEL, maxTokens = 2000) => {
     try {
         console.log('Calling OpenRouter with model:', model);
         console.log('Max tokens:', maxTokens);
-        
+
         const response = await axios.post(
             'https://openrouter.ai/api/v1/chat/completions',
             {
@@ -32,26 +28,15 @@ const callOpenRouter = async (messages, model = AI_MODEL, maxTokens = 2000) => {
                 timeout: 30000
             }
         );
-        
+
         console.log('OpenRouter response received successfully');
         return response.data.choices[0].message.content;
     } catch (error) {
-        console.error('OpenRouter API Error Details:');
-        console.error('Error type:', error.code);
-        console.error('Status:', error.response?.status);
-        console.error('Data:', JSON.stringify(error.response?.data, null, 2));
-        console.error('Message:', error.message);
-        console.error('Full error:', error);
-        
-        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-            throw new Error('Cannot connect to OpenRouter API. Check your internet connection.');
-        }
-        
-        throw new Error(`AI service unavailable: ${error.response?.data?.error?.message || error.message}`);
+        console.error('OpenRouter API Error Details:', error);
     }
 };
 
-// 1) Generate RFP from natural text
+//  Generate RFP from natural text
 const generateRfpFromText = async (text) => {
     const prompt = generateRfpPrompt(text);
 
@@ -66,11 +51,10 @@ const generateRfpFromText = async (text) => {
         return parsed;
     } catch (err) {
         console.error('Failed to parse AI response:', content);
-        throw new Error('Invalid AI response format');
     }
 };
 
-// 2) Parse vendor email
+//  Parse vendor email
 const parseProposalFromEmail = async (emailBody) => {
     const prompt = parseProposalPrompt(emailBody);
 
@@ -85,11 +69,10 @@ const parseProposalFromEmail = async (emailBody) => {
         return parsed;
     } catch (err) {
         console.error('Failed to parse AI response:', content);
-        throw new Error('Invalid AI response format');
     }
 };
 
-// 3) Compare proposals
+//  Compare all the given proposals
 const compareProposals = async (rfp, proposals) => {
     if (!proposals || proposals.length === 0) {
         return {
@@ -119,7 +102,6 @@ const compareProposals = async (rfp, proposals) => {
         return parsed;
     } catch (err) {
         console.error('Failed to parse AI response:', content);
-        throw new Error('Invalid AI response format');
     }
 };
 

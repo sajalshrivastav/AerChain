@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const connectDB = require('./config/ConnectDB');
 const cors = require('cors');
+const {startPolling , stopPolling} = require('./service/EmailPoller.service')
 
 
 app.use(cors());
@@ -22,6 +23,20 @@ app.use('/api/email', Email);
 
 const startServer = async () => {
     await connectDB();
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, () => {
+        // Disable IMAP polling to prevent connection errors
+        // Use manual /api/email/process endpoint instead
+        // startPolling();
+        console.log(`Server running on port ${PORT}`)
+        console.log('📧 Email: Use /api/email/process to manually process vendor replies');
+    });
 };
 startServer();
+
+
+
+process.on('SIGINT', () => {
+    console.log('Shutting down...');
+    stopPolling();
+    process.exit(0);
+});
