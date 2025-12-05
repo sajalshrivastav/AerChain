@@ -8,4 +8,8 @@ router.post('/', createVendor);
 // List vendors
 router.get('/', getListVendor);
 
+//delete Vendor
+
+//update Vendor
+
 module.exports = router;
