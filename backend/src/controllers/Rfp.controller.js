@@ -5,7 +5,7 @@ const aiService = require('../service/AI.service');
 const mailer = require('../service/Mailer.service');
 
 
-const createRFP = async () => {
+const createRFP = async (req, res) => {
     try {
         const payload = req.body;
         const proposalRequest = await Rfp.create(payload);
