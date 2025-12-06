@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
-import { Award } from 'lucide-react'
+import { Award, TrendingUp } from 'lucide-react'
 
 export default function Compare() {
   const [rfps, setRfps] = useState([])
@@ -52,6 +52,21 @@ export default function Compare() {
       setLoading(false)
     }
   }
+
+  // Get score color for text
+  const getScoreColor = (score) => {
+    if (score >= 80) return 'text-emerald-600'
+    if (score >= 60) return 'text-amber-600'
+    if (score >= 40) return 'text-orange-600'
+    return 'text-red-600'
+  }
+
+  // Sort scores by highest first
+  const sortedScores = recommendation?.scores
+    ? [...recommendation.scores].sort((a, b) => (b.score || 0) - (a.score || 0))
+    : []
+
+  const topVendor = sortedScores[0]
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
@@ -204,26 +219,99 @@ export default function Compare() {
 
         {/* AI Recommendation */}
         {recommendation && (
-          <div className="bg-white border border-emerald-100 rounded-2xl shadow-sm p-5 sm:p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                <Award size={18} className="text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-semibold text-slate-900">
-                  AI Recommendation
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={14} className="text-teal-600" />
+                <h3 className="text-sm font-semibold text-slate-900">
+                  AI Rankings
                 </h3>
-                <p className="text-[11px] sm:text-xs text-slate-500">
-                  Based on price, delivery time, warranty, and summary.
-                </p>
               </div>
+              <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">
+                {recommendation.summary}
+              </p>
             </div>
-            <pre className="text-xs sm:text-sm text-slate-800 bg-slate-50 border border-slate-100 p-4 rounded-xl overflow-auto">
-              {JSON.stringify(recommendation, null, 2)}
-            </pre>
+
+            <div className="divide-y divide-slate-200">
+              {sortedScores.map((item, index) => {
+                const vendor = proposals.find(
+                  (p) => p.vendorId?._id === item.vendorId,
+                )
+                const isTop = index === 0
+
+                return (
+                  <div
+                    key={item.vendorId}
+                    className={`px-4 py-3 transition ${
+                      isTop
+                        ? 'bg-emerald-50 border-l-2 border-l-emerald-600'
+                        : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-600">
+                          #{index + 1}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-900">
+                          {vendor?.vendorId?.name || 'Unknown'}
+                        </span>
+                        {isTop && (
+                          <Award size={14} className="text-emerald-600" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-lg font-bold ${getScoreColor(
+                          item.score,
+                        )}`}
+                      >
+                        {item.score}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-600 space-y-0.5">
+                      <div>
+                        <span className="text-slate-700 font-medium">
+                          Strengths:{' '}
+                        </span>
+                        {item.strengths || '—'}
+                      </div>
+                      <div>
+                        <span className="text-slate-700 font-medium">
+                          Weaknesses:{' '}
+                        </span>
+                        {item.weaknesses || '—'}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {topVendor && (
+              <div className="px-4 py-3 bg-emerald-50 border-t border-slate-200">
+                <div className="flex items-start gap-2">
+                  <div className="h-6 w-6 rounded-full bg-emerald-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Award size={12} className="text-emerald-700" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-emerald-800">
+                      RECOMMENDED
+                    </p>
+                    <p className="text-sm font-bold text-emerald-900 mt-0.5">
+                      {proposals.find(
+                        (p) => p.vendorId?._id === topVendor.vendorId,
+                      )?.vendorId?.name || 'Unknown'}
+                    </p>
+                    <p className="text-[10px] text-emerald-800 mt-1">
+                      {recommendation.recommendation?.reason ||
+                        'Best overall value'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
-
         {/* Simulate Vendor Response */}
         {/* <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 sm:p-6">
           <h3 className="text-sm sm:text-base font-semibold text-slate-900 mb-2">
