@@ -59,40 +59,44 @@ export default function Compare() {
   const refreshProposals = async () => {
     setRefreshing(true)
     setDebugInfo(null)
-    
+
     // Mark all pending proposals as processing
     const pendingIds = proposals
-      .filter(p => p.status === 'pending')
-      .map(p => p._id)
+      .filter((p) => p.status === 'pending')
+      .map((p) => p._id)
     setProcessingProposals(new Set(pendingIds))
-    
+
     try {
       // Step 1: Trigger processing of pending proposals
-      console.log('🔄 Triggering email processing...')
+      console.log('Triggering email processing...')
       const processResult = await api.processPendingProposals()
-      console.log('✅ Process result:', processResult)
-      
+      console.log('Process result:', processResult)
+
       // Step 2: Wait a moment for processing to complete
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
       // Step 3: Reload proposals
       if (selectedRfp) {
         const p = await api.getProposals(selectedRfp)
         setProposals(p || [])
-        
+
         // Show debug info
-        const pending = (p || []).filter(prop => prop.status === 'pending').length
-        const received = (p || []).filter(prop => prop.status === 'received').length
+        const pending = (p || []).filter(
+          (prop) => prop.status === 'pending',
+        ).length
+        const received = (p || []).filter(
+          (prop) => prop.status === 'received',
+        ).length
         setDebugInfo({
           total: (p || []).length,
           pending,
           received,
-          message: processResult.message
+          message: processResult.message,
         })
-        
-        alert(`✅ Refreshed! ${received} received, ${pending} pending`)
+
+        alert(`Refreshed! ${received} received, ${pending} pending`)
       } else {
-        alert('✅ Email processing triggered')
+        alert('Email processing triggered')
       }
     } catch (err) {
       console.error('Refresh error:', err)
@@ -172,7 +176,10 @@ export default function Compare() {
                 disabled={refreshing || loading}
                 title="Check Gmail for new vendor responses"
               >
-                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                <RefreshCw
+                  size={16}
+                  className={refreshing ? 'animate-spin' : ''}
+                />
                 {refreshing ? 'Checking…' : 'Refresh from Gmail'}
               </button>
               <button
@@ -206,13 +213,14 @@ export default function Compare() {
                   {debugInfo.message}
                 </p>
                 <div className="mt-2 text-xs text-blue-800 space-y-1">
-                  <div>📊 Total proposals: {debugInfo.total}</div>
-                  <div>✅ Received: {debugInfo.received}</div>
-                  <div>⏳ Pending: {debugInfo.pending}</div>
+                  <div>Total proposals: {debugInfo.total}</div>
+                  <div>Received: {debugInfo.received}</div>
+                  <div>Pending: {debugInfo.pending}</div>
                 </div>
                 {debugInfo.pending > 0 && (
                   <p className="mt-2 text-xs text-blue-700">
-                    💡 Tip: If proposals are still pending, check your backend console logs for connection issues or messageId mismatches.
+                    Tip: If proposals are still pending, check your backend
+                    console logs for connection issues or messageId mismatches.
                   </p>
                 )}
               </div>
@@ -268,20 +276,23 @@ export default function Compare() {
                     proposals.map((p) => {
                       const isProcessing = processingProposals.has(p._id)
                       const isPending = p.status === 'pending'
-                      
+
                       return (
                         <tr
                           key={p._id}
                           className={`border-b border-slate-50 transition ${
-                            isProcessing 
-                              ? 'bg-blue-50 animate-pulse' 
+                            isProcessing
+                              ? 'bg-blue-50 animate-pulse'
                               : 'hover:bg-slate-50/80'
                           }`}
                         >
                           <td className="py-3 px-4 align-top text-slate-900 text-sm">
                             <div className="flex items-center gap-2">
                               {isProcessing && (
-                                <RefreshCw size={14} className="text-blue-600 animate-spin" />
+                                <RefreshCw
+                                  size={14}
+                                  className="text-blue-600 animate-spin"
+                                />
                               )}
                               {p.vendorId?.name || '—'}
                               {isPending && !isProcessing && (
@@ -293,25 +304,31 @@ export default function Compare() {
                           </td>
                           <td className="py-3 px-4 align-top text-slate-700">
                             {isProcessing ? (
-                              <span className="text-blue-600 text-xs">Processing...</span>
+                              <span className="text-blue-600 text-xs">
+                                Processing...
+                              </span>
+                            ) : p.parsed?.total_price ? (
+                              `₹${p.parsed.total_price}`
                             ) : (
-                              p.parsed?.total_price
-                                ? `₹${p.parsed.total_price}`
-                                : '—'
+                              '—'
                             )}
                           </td>
                           <td className="py-3 px-4 align-top text-slate-700">
                             {isProcessing ? (
-                              <span className="text-blue-600 text-xs">Processing...</span>
+                              <span className="text-blue-600 text-xs">
+                                Processing...
+                              </span>
+                            ) : p.parsed?.delivery_days ? (
+                              `${p.parsed.delivery_days} days`
                             ) : (
-                              p.parsed?.delivery_days
-                                ? `${p.parsed.delivery_days} days`
-                                : '—'
+                              '—'
                             )}
                           </td>
                           <td className="py-3 px-4 align-top text-slate-700">
                             {isProcessing ? (
-                              <span className="text-blue-600 text-xs">Processing...</span>
+                              <span className="text-blue-600 text-xs">
+                                Processing...
+                              </span>
                             ) : (
                               p.parsed?.warranty || '—'
                             )}
@@ -440,121 +457,7 @@ export default function Compare() {
             )}
           </div>
         )}
-        {/* Simulate Vendor Response */}
-        {/* <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 sm:p-6">
-          <h3 className="text-sm sm:text-base font-semibold text-slate-900 mb-2">
-             Simulate Vendor Response (Testing)
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-500 mb-4">
-            Email integration is stubbed. Use this section to simulate a vendor
-            sending a proposal and test the parsing & comparison flow.
-          </p>
-          <SimulateResponse proposals={proposals} onSuccess={loadProposals} />
-        </div> */}
       </div>
     </div>
   )
 }
-
-// function SimulateResponse({ proposals, onSuccess }) {
-//   const [selectedProposal, setSelectedProposal] = useState('')
-//   const [emailBody, setEmailBody] = useState('')
-//   const [submitting, setSubmitting] = useState(false)
-
-//   const pendingProposals = proposals.filter((p) => p.status === 'pending')
-
-//   const handleSubmit = async () => {
-//     if (!selectedProposal) return alert('Select a proposal')
-//     if (!emailBody.trim()) return alert('Enter email body')
-
-//     setSubmitting(true)
-//     try {
-//       const proposal = proposals.find((p) => p._id === selectedProposal)
-//       await api.simulateInbound({
-//         rfpId: proposal.rfpId,
-//         vendorId: proposal.vendorId._id,
-//         emailBody,
-//       })
-//       alert('Proposal received and parsed!')
-//       setEmailBody('')
-//       setSelectedProposal('')
-//       onSuccess()
-//     } catch (err) {
-//       console.error(err)
-//       alert('Failed to simulate response')
-//     } finally {
-//       setSubmitting(false)
-//     }
-//   }
-
-//   const fillSample = () => {
-//     setEmailBody(`Dear Procurement Team,
-
-// Thank you for the RFP opportunity. Here is our proposal:
-
-// Total Price: ₹45,000
-// Delivery Time: 25 days
-// Warranty: 2 years comprehensive warranty
-
-// Line Items:
-// - Laptops (20 units): ₹30,000
-// - Monitors (15 units): ₹12,000
-// - Keyboards (10 units): ₹3,000
-
-// We look forward to working with you.
-
-// Best regards,
-// Vendor Team`)
-//   }
-
-//   return (
-//     <div className="space-y-4">
-//       <div>
-//         <label className="block text-xs font-medium text-slate-600 mb-1.5">
-//           Select Pending Proposal
-//         </label>
-//         <select
-//           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500 bg-slate-50 hover:bg-white transition"
-//           value={selectedProposal}
-//           onChange={(e) => setSelectedProposal(e.target.value)}
-//         >
-//           <option value="">-- choose proposal --</option>
-//           {pendingProposals.map((p) => (
-//             <option key={p._id} value={p._id}>
-//               {p.vendorId?.name || 'Unknown'} (Status: {p.status})
-//             </option>
-//           ))}
-//         </select>
-//       </div>
-
-//       <div>
-//         <label className="block text-xs font-medium text-slate-600 mb-1.5">
-//           Vendor Email Response
-//         </label>
-//         <textarea
-//           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-mono shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500 bg-slate-50 hover:bg-white transition"
-//           rows={8}
-//           value={emailBody}
-//           onChange={(e) => setEmailBody(e.target.value)}
-//           placeholder="Paste vendor's email response here..."
-//         />
-//       </div>
-
-//       <div className="flex flex-wrap gap-2">
-//         <button
-//           className="inline-flex items-center justify-center px-4 sm:px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed transition"
-//           onClick={handleSubmit}
-//           disabled={submitting}
-//         >
-//           {submitting ? 'Processing…' : 'Submit Response'}
-//         </button>
-//         <button
-//           className="inline-flex items-center justify-center px-4 sm:px-5 py-2.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
-//           onClick={fillSample}
-//         >
-//           Fill Sample
-//         </button>
-//       </div>
-//     </div>
-//   )
-// }

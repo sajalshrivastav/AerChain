@@ -32,7 +32,7 @@ const simulateVendorResponse = async (req, res) => {
         proposal.receivedAt = new Date();
         await proposal.save();
 
-        console.log('✅ Proposal updated successfully');
+        console.log('Proposal updated successfully');
         res.json({ message: 'Proposal received and parsed', proposal });
     } catch (err) {
         console.error('simulateVendorResponse error', err);
@@ -86,7 +86,7 @@ const processVendorEmail = async (req, res) => {
         proposal.receivedAt = new Date();
         await proposal.save();
 
-        console.log('✅ Proposal updated successfully for vendor:', vendor.name);
+        console.log('Proposal updated successfully for vendor:', vendor.name);
         res.json({ message: 'Proposal received and parsed', proposal, vendor: vendor.name });
     } catch (err) {
         console.error('processVendorEmail error', err);
@@ -97,7 +97,7 @@ const processVendorEmail = async (req, res) => {
 // Manually trigger processing of all pending proposals
 const processPending = async (req, res) => {
     try {
-        console.log('🔄 Manual trigger: Processing pending proposals...');
+        console.log(' Manual trigger: Processing pending proposals...');
         await processPendingProposals();
         res.json({ message: 'Pending proposals processed successfully' });
     } catch (err) {
@@ -109,7 +109,7 @@ const processPending = async (req, res) => {
 // List all emails in inbox (diagnostic)
 const listInbox = async (req, res) => {
     try {
-        console.log('📋 Listing inbox emails...');
+        console.log(' Listing inbox emails...');
         const emails = await listInboxEmails();
         res.json({ count: emails.length, emails });
     } catch (err) {
