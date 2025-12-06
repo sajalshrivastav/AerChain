@@ -2,6 +2,8 @@ const Proposal = require('../models/Proposal.model');
 const Vendor = require('../models/Vendor.model');
 const aiService = require('../service/AI.service');
 const { processPendingProposals, listInboxEmails } = require('../service/EmailReceiver.service');
+const { processRawEmail } = require('../utils/EmailParse');
+const { startPolling, stopPolling } = require('../service/EmailPoller.service');
 
 // Simulate receiving a vendor proposal email
 const simulateVendorResponse = async (req, res) => {
@@ -52,7 +54,7 @@ const processVendorEmail = async (req, res) => {
         if (!rfpIdMatch) {
             return res.status(400).json({ error: 'Could not extract RFP ID from subject' });
         }
-        
+
         const rfpId = rfpIdMatch[1];
         console.log('Processing email for RFP ID:', rfpId);
 
@@ -63,9 +65,9 @@ const processVendorEmail = async (req, res) => {
         }
 
         // Find the proposal
-        const proposal = await Proposal.findOne({ 
-            rfpId: rfpId, 
-            vendorId: vendor._id 
+        const proposal = await Proposal.findOne({
+            rfpId: rfpId,
+            vendorId: vendor._id
         });
 
         if (!proposal) {
@@ -116,4 +118,39 @@ const listInbox = async (req, res) => {
     }
 };
 
-module.exports = { simulateVendorResponse, processVendorEmail, processPending, listInbox };
+
+
+// Manual raw EML processing endpoint used for testing
+const processRaw = async (req, res) => {
+    try {
+        const raw = req.body.raw || req.body.eml || req.body.email;
+        if (!raw) return res.status(400).json({ error: 'raw email content required' });
+        const created = await processRawEmail(raw);
+        return res.json({ ok: true, created });
+    } catch (err) {
+        console.error('processRaw error', err);
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+const startPoll = (req, res) => {
+    try {
+        startPolling();
+        return res.json({ ok: true, message: 'Email polling started' });
+    } catch (err) {
+        console.error('startPoll error', err);
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+const stopPoll = (req, res) => {
+    try {
+        stopPolling();
+        return res.json({ ok: true, message: 'Email polling stopped' });
+    } catch (err) {
+        console.error('stopPoll error', err);
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+module.exports = { simulateVendorResponse, processVendorEmail, processPending, listInbox, processRaw, startPoll, stopPoll };

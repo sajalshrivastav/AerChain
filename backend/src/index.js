@@ -24,11 +24,10 @@ app.use('/api/email', Email);
 const startServer = async () => {
     await connectDB();
     app.listen(PORT, () => {
-        // Disable IMAP polling to prevent connection errors
-        // Use manual /api/email/process endpoint instead
+        // Enable automatic IMAP polling to detect vendor replies
         startPolling();
         console.log(`Server running on port ${PORT}`)
-        // console.log('📧 Email: Use /api/email/process to manually process vendor replies');
+        // console.log('📧 Email polling started - monitoring for vendor replies');
     });
 };
 startServer();

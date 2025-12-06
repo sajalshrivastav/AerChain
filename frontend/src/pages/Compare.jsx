@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
-import { Award, TrendingUp } from 'lucide-react'
+import { Award, TrendingUp, RefreshCw } from 'lucide-react'
 
 export default function Compare() {
   const [rfps, setRfps] = useState([])
@@ -8,6 +8,9 @@ export default function Compare() {
   const [proposals, setProposals] = useState([])
   const [recommendation, setRecommendation] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [debugInfo, setDebugInfo] = useState(null)
+  const [processingProposals, setProcessingProposals] = useState(new Set())
 
   useEffect(() => {
     loadRfps()
@@ -50,6 +53,53 @@ export default function Compare() {
       alert('Compare failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const refreshProposals = async () => {
+    setRefreshing(true)
+    setDebugInfo(null)
+    
+    // Mark all pending proposals as processing
+    const pendingIds = proposals
+      .filter(p => p.status === 'pending')
+      .map(p => p._id)
+    setProcessingProposals(new Set(pendingIds))
+    
+    try {
+      // Step 1: Trigger processing of pending proposals
+      console.log('🔄 Triggering email processing...')
+      const processResult = await api.processPendingProposals()
+      console.log('✅ Process result:', processResult)
+      
+      // Step 2: Wait a moment for processing to complete
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Step 3: Reload proposals
+      if (selectedRfp) {
+        const p = await api.getProposals(selectedRfp)
+        setProposals(p || [])
+        
+        // Show debug info
+        const pending = (p || []).filter(prop => prop.status === 'pending').length
+        const received = (p || []).filter(prop => prop.status === 'received').length
+        setDebugInfo({
+          total: (p || []).length,
+          pending,
+          received,
+          message: processResult.message
+        })
+        
+        alert(`✅ Refreshed! ${received} received, ${pending} pending`)
+      } else {
+        alert('✅ Email processing triggered')
+      }
+    } catch (err) {
+      console.error('Refresh error:', err)
+      alert('Failed to refresh: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setRefreshing(false)
+      setProcessingProposals(new Set())
     }
   }
 
@@ -117,6 +167,15 @@ export default function Compare() {
 
             <div className="flex gap-2 sm:gap-3">
               <button
+                className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg text-sm font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition disabled:opacity-60"
+                onClick={refreshProposals}
+                disabled={refreshing || loading}
+                title="Check Gmail for new vendor responses"
+              >
+                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                {refreshing ? 'Checking…' : 'Refresh from Gmail'}
+              </button>
+              <button
                 className="inline-flex items-center justify-center px-4 sm:px-5 py-2.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
                 onClick={loadProposals}
                 disabled={loading}
@@ -134,6 +193,38 @@ export default function Compare() {
             </div>
           </div>
         </div>
+
+        {/* Debug Info */}
+        {debugInfo && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0">
+                <RefreshCw size={16} className="text-blue-700" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-blue-900">
+                  {debugInfo.message}
+                </p>
+                <div className="mt-2 text-xs text-blue-800 space-y-1">
+                  <div>📊 Total proposals: {debugInfo.total}</div>
+                  <div>✅ Received: {debugInfo.received}</div>
+                  <div>⏳ Pending: {debugInfo.pending}</div>
+                </div>
+                {debugInfo.pending > 0 && (
+                  <p className="mt-2 text-xs text-blue-700">
+                    💡 Tip: If proposals are still pending, check your backend console logs for connection issues or messageId mismatches.
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setDebugInfo(null)}
+                className="text-blue-600 hover:text-blue-800 text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Proposals Table */}
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 sm:p-6">
@@ -174,32 +265,69 @@ export default function Compare() {
                 </thead>
                 <tbody>
                   {proposals.length ? (
-                    proposals.map((p) => (
-                      <tr
-                        key={p._id}
-                        className="border-b border-slate-50 hover:bg-slate-50/80 transition"
-                      >
-                        <td className="py-3 px-4 align-top text-slate-900 text-sm">
-                          {p.vendorId?.name || '—'}
-                        </td>
-                        <td className="py-3 px-4 align-top text-slate-700">
-                          {p.parsed?.total_price
-                            ? `₹${p.parsed.total_price}`
-                            : '—'}
-                        </td>
-                        <td className="py-3 px-4 align-top text-slate-700">
-                          {p.parsed?.delivery_days
-                            ? `${p.parsed.delivery_days} days`
-                            : '—'}
-                        </td>
-                        <td className="py-3 px-4 align-top text-slate-700">
-                          {p.parsed?.warranty || '—'}
-                        </td>
-                        <td className="py-3 px-4 align-top text-slate-600 text-xs sm:text-sm max-w-md">
-                          {p.ai_summary || '—'}
-                        </td>
-                      </tr>
-                    ))
+                    proposals.map((p) => {
+                      const isProcessing = processingProposals.has(p._id)
+                      const isPending = p.status === 'pending'
+                      
+                      return (
+                        <tr
+                          key={p._id}
+                          className={`border-b border-slate-50 transition ${
+                            isProcessing 
+                              ? 'bg-blue-50 animate-pulse' 
+                              : 'hover:bg-slate-50/80'
+                          }`}
+                        >
+                          <td className="py-3 px-4 align-top text-slate-900 text-sm">
+                            <div className="flex items-center gap-2">
+                              {isProcessing && (
+                                <RefreshCw size={14} className="text-blue-600 animate-spin" />
+                              )}
+                              {p.vendorId?.name || '—'}
+                              {isPending && !isProcessing && (
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 align-top text-slate-700">
+                            {isProcessing ? (
+                              <span className="text-blue-600 text-xs">Processing...</span>
+                            ) : (
+                              p.parsed?.total_price
+                                ? `₹${p.parsed.total_price}`
+                                : '—'
+                            )}
+                          </td>
+                          <td className="py-3 px-4 align-top text-slate-700">
+                            {isProcessing ? (
+                              <span className="text-blue-600 text-xs">Processing...</span>
+                            ) : (
+                              p.parsed?.delivery_days
+                                ? `${p.parsed.delivery_days} days`
+                                : '—'
+                            )}
+                          </td>
+                          <td className="py-3 px-4 align-top text-slate-700">
+                            {isProcessing ? (
+                              <span className="text-blue-600 text-xs">Processing...</span>
+                            ) : (
+                              p.parsed?.warranty || '—'
+                            )}
+                          </td>
+                          <td className="py-3 px-4 align-top text-slate-600 text-xs sm:text-sm max-w-md">
+                            {isProcessing ? (
+                              <span className="text-blue-600 text-xs">
+                                Fetching and parsing email response...
+                              </span>
+                            ) : (
+                              p.ai_summary || '—'
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })
                   ) : (
                     <tr>
                       <td

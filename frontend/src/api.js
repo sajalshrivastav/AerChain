@@ -26,4 +26,8 @@ export default {
 
     //Simulate Email Inbound API
     simulateInbound: (payload) => client.post('/email/simulate', payload).then(r => r.data),
+    
+    //Email Processing APIs
+    processPendingProposals: () => client.post('/email/process-pending').then(r => r.data),
+    listInboxEmails: () => client.get('/email/list-inbox').then(r => r.data),
 };

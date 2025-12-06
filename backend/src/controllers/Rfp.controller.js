@@ -72,12 +72,15 @@ const sendProposalToVendors = async (req, res) => {
                 ].join('\n');
 
                 const info = await mailer.sendMail({ to: v.email, subject, text });
+                // normalize messageId (remove surrounding <>) before saving
+                const rawMsgId = info && info.messageId ? info.messageId : `stub-${Date.now()}`;
+                const normalizedMsgId = rawMsgId.toString().trim().replace(/^</, '').replace(/>$/, '');
                 // create pending proposal record
                 await Proposal.create({
                     rfpId: id,
                     vendorId: v._id,
                     status: 'pending',
-                    messageId: info && info.messageId ? info.messageId : `stub-${Date.now()}`
+                    messageId: normalizedMsgId
                 });
                 results.sent.push(v._id);
             } catch (sendErr) {
