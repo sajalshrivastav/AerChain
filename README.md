@@ -1,7 +1,5 @@
 # AI-Powered RFP Management System
 
-> **SDE Assignment Submission**  
-> A complete end-to-end procurement automation system that leverages AI to streamline the RFP workflow from creation to vendor selection.
 
 ## 📹 Demo Video
 
