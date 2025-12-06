@@ -3,7 +3,7 @@
 
 ## 📹 Demo Video
 
-**[Watch Demo Video Here](#)** *(5-10 minute walkthrough)*
+**[Watch Demo Video Here](https://www.loom.com/share/4abfb8f529b14a68b6872a51102cbc7c)** *(5-10 minute walkthrough)*
 
 The demo covers:
 1. Creating an RFP from natural language input
