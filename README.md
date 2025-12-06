@@ -1117,10 +1117,10 @@ Reason: Needed granular loading state per proposal row, not just global
 
 ## 📧 Contact & Submission
 
-**GitHub Repository**: [Link to Repository]  
+**GitHub Repository**: https://github.com/sajalshrivastav/AerChain
 **Demo Video**: [Link to Demo Video]  
-**Submitted By**: [Your Name]  
-**Date**: December 2024
+**Submitted By**: Sajal Shrivastav
+**Date**: 06th December 2025
 
 ---
 
