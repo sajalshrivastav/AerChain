@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
-import { CheckCircle, Play } from 'lucide-react'
+import { CheckCircle, Play, Plus } from 'lucide-react'
+import Card from '../components/Card'
 
 export default function CreateRFP() {
   const Tab = ['Create RFP', 'Generated Draft']
@@ -11,6 +12,26 @@ export default function CreateRFP() {
   const [message, setMessage] = useState('')
   const [vendorsList, setVendorsList] = useState([])
   const [selectedTab, setSelectedTab] = useState(Tab[0])
+
+  const updateItemField = (index, field, value) => {
+    if (!draft) return
+    const items = Array.isArray(draft.items) ? [...draft.items] : []
+    items[index] = { ...(items[index] || {}), [field]: value }
+    setDraft({ ...draft, items })
+  }
+  const removeItem = (index) => {
+    if (!draft) return
+    const items = Array.isArray(draft.items) ? [...draft.items] : []
+    items.splice(index, 1)
+    setDraft({ ...draft, items })
+  }
+
+  const addItem = () => {
+    if (!draft) return
+    const items = Array.isArray(draft.items) ? [...draft.items] : []
+    items.push({ name: '', specs: '', quantity: 1, max_unit_price: '' })
+    setDraft({ ...draft, items })
+  }
 
   const load = async () => {
     setLoading(true)
@@ -71,9 +92,7 @@ export default function CreateRFP() {
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
-        {/* LEFT: RFP Section */}
         <div className="flex-1">
-          {/* Top heading */}
           <div className="mb-6">
             <p className="inline-flex items-center text-xs font-semibold tracking-wide text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
               RFP Creation
@@ -259,27 +278,48 @@ export default function CreateRFP() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
-                    Items (JSON)
-                  </label>
-                  <textarea
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-mono shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500 bg-slate-50 hover:bg-white transition"
-                    rows={5}
-                    value={JSON.stringify(draft?.items || [], null, 2)}
-                    onChange={(e) => {
-                      try {
-                        setDraft({
-                          ...draft,
-                          items: JSON.parse(e.target.value),
-                        })
-                      } catch {
-                        // ignore parse errors silently
-                      }
-                    }}
-                  />
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Provide an array of line items with quantity, specs, etc.
-                  </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Items
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addItem}
+                      className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 text-xs font-medium"
+                    >
+                      <Plus size={14} />
+                      Add Item
+                    </button>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {Array.isArray(draft?.items) &&
+                      draft.items.map((item, idx) => (
+                        <Card
+                          key={idx}
+                          index={idx}
+                          item={item}
+                          onFieldChange={(field, value) =>
+                            updateItemField(idx, field, value)
+                          }
+                          onRemove={() => removeItem(idx)}
+                        />
+                      ))}
+                  </div>
+
+                  {(!draft?.items || draft.items.length === 0) && (
+                    <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-lg">
+                      <p className="text-sm text-slate-500">
+                        No items added yet
+                      </p>
+                      <button
+                        type="button"
+                        onClick={addItem}
+                        className="mt-2 text-teal-600 hover:text-teal-700 text-xs font-medium"
+                      >
+                        Add your first item
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3 pt-2">
@@ -304,10 +344,10 @@ export default function CreateRFP() {
 
         {/* RIGHT: Vendors Sidebar */}
         <div className="w-full lg:w-80">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 h-[380px] flex flex-col overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 text-white">
+          <div className="bg-white relative top-[23%] left-[20px] rounded-2xl shadow-sm border border-slate-100 h-[380px] flex flex-col overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 ">
               <h3 className="text-sm font-semibold">Vendors</h3>
-              <p className="text-[11px] text-slate-200 mt-0.5">
+              <p className="text-[11px] mt-0.5">
                 {loading && !vendorsList.length
                   ? 'Loading vendor list...'
                   : 'Vendors who can receive your RFP.'}

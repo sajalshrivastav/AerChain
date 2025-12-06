@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
-import { Mail } from 'lucide-react'
+import { Mail, ChevronDown, X, Search } from 'lucide-react'
+import MultiSelect from '../components/MultiSelect'
 
 export default function SendRFP() {
   const [rfps, setRfps] = useState([])
@@ -90,18 +91,15 @@ export default function SendRFP() {
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
                 Select RFP
               </label>
-              <select
-                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500 bg-slate-50 hover:bg-white transition"
-                value={selectedRfp}
-                onChange={(e) => setSelectedRfp(e.target.value)}
-              >
-                <option value="">-- choose RFP --</option>
-                {rfps.map((r) => (
-                  <option key={r._id} value={r._id}>
-                    {r.title} — ₹{r.budget || '—'}
-                  </option>
-                ))}
-              </select>
+              <MultiSelect
+                items={rfps}
+                selectedItems={selectedRfp}
+                onChange={setSelectedRfp}
+                isMulti={false}
+                placeholder="-- choose RFP --"
+                displayKey="title"
+                valueKey="_id"
+              />
               {!rfps.length && (
                 <p className="mt-1 text-[11px] text-slate-400">
                   No RFPs yet. Create one before sending.
@@ -114,33 +112,15 @@ export default function SendRFP() {
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
                 Select Vendors
               </label>
-              <div className="border border-slate-200 rounded-xl p-3 mt-1 max-h-44 overflow-auto bg-slate-50">
-                {vendors.map((v) => (
-                  <label
-                    key={v._id}
-                    className="flex items-start gap-2 mb-2 text-sm text-slate-700 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                      checked={selectedVendors.includes(v._id)}
-                      onChange={() => toggleVendor(v._id)}
-                    />
-                    <span>
-                      <span className="font-medium">{v.name}</span>{' '}
-                      <span className="text-xs text-slate-500">
-                        ({v.email})
-                      </span>
-                    </span>
-                  </label>
-                ))}
-
-                {!vendors.length && (
-                  <div className="text-xs text-slate-400">
-                    No vendors yet. Add vendors in the Vendors section first.
-                  </div>
-                )}
-              </div>
+              <MultiSelect
+                items={vendors}
+                selectedItems={selectedVendors}
+                onChange={setSelectedVendors}
+                isMulti={true}
+                placeholder="Select vendors..."
+                displayKey="name"
+                valueKey="_id"
+              />
               {selectedVendors.length > 0 && (
                 <p className="mt-1 text-[11px] text-emerald-600">
                   {selectedVendors.length} vendor(s) selected.

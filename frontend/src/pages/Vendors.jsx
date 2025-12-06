@@ -1,4 +1,12 @@
-import { PlusCircle, Users, Loader2 } from 'lucide-react'
+import {
+  PlusCircle,
+  Users,
+  Loader2,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+} from 'lucide-react'
 import api from '../api'
 import { useEffect, useState } from 'react'
 
@@ -8,6 +16,23 @@ const Vendors = () => {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [vendors, setVendors] = useState([])
+
+  const [editingId, setEditingId] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    type: 'confirm',
+    title: '',
+    message: '',
+    confirmText: 'OK',
+    cancelText: 'Cancel',
+    isLoading: false,
+    onConfirm: null,
+  })
 
   const load = async () => {
     setLoading(true)
@@ -40,9 +65,63 @@ const Vendors = () => {
       await load()
     } catch (err) {
       console.error(err)
-      alert('Failed to add vendor')
+      if (err.response?.status === 409) {
+        alert('A vendor with this email already exists')
+      } else {
+        alert('Failed to add vendor')
+      }
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const startEdit = (vendor) => {
+    setEditingId(vendor._id)
+    setEditName(vendor.name)
+    setEditEmail(vendor.email)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditName('')
+    setEditEmail('')
+  }
+
+  const saveEdit = async () => {
+    if (!editName.trim() || !editEmail.trim()) {
+      return alert('Name and email cannot be empty')
+    }
+    setSavingEdit(true)
+    try {
+      await api.updateVendor(editingId, {
+        name: editName.trim(),
+        email: editEmail.trim(),
+      })
+      await load()
+      cancelEdit()
+    } catch (err) {
+      console.error(err)
+      if (err.response?.status === 409) {
+        alert('A vendor with this email already exists')
+      } else {
+        alert('Failed to update vendor')
+      }
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const deleteVendor = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this vendor?')) return
+    setDeletingId(id)
+    try {
+      await api.deleteVendor(id)
+      await load()
+    } catch (err) {
+      console.error(err)
+      alert('Failed to delete vendor')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -69,8 +148,7 @@ const Vendors = () => {
               Vendor Management System
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Add new vendors and keep track of your existing partners in one
-              place.
+              Add, edit, and manage your vendor partners in one place.
             </p>
           </div>
 
@@ -155,7 +233,7 @@ const Vendors = () => {
                 {loading
                   ? 'Fetching vendor list...'
                   : vendors.length
-                  ? 'Click on a row to view details (if needed in future).'
+                  ? 'Edit or remove vendors as needed.'
                   : 'No vendors added yet — start by adding your first vendor.'}
               </p>
             </div>
@@ -171,6 +249,9 @@ const Vendors = () => {
                   <th className="py-3.5 px-5 sm:px-6 font-medium text-xs text-slate-500 tracking-wide">
                     Email
                   </th>
+                  <th className="py-3.5 px-5 sm:px-6 font-medium text-xs text-slate-500 tracking-wide text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -178,7 +259,7 @@ const Vendors = () => {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan={2}
+                      colSpan={3}
                       className="py-8 px-5 sm:px-6 text-center text-slate-500 text-sm"
                     >
                       <div className="inline-flex items-center gap-2">
@@ -188,37 +269,122 @@ const Vendors = () => {
                     </td>
                   </tr>
                 ) : vendors.length ? (
-                  vendors.map((v) => (
-                    <tr
-                      key={v._id}
-                      className="border-b border-slate-50 hover:bg-slate-50/80 transition"
-                    >
-                      <td className="py-3.5 px-5 sm:px-6 align-middle">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center shadow-sm">
-                            {getInitials(v.name)}
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-slate-900">
-                              {v.name}
+                  vendors.map((v) => {
+                    const isEditing = editingId === v._id
+                    return (
+                      <tr
+                        key={v._id}
+                        className="border-b border-slate-50 hover:bg-slate-50/80 transition"
+                      >
+                        <td className="py-3.5 px-5 sm:px-6 align-middle">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center shadow-sm">
+                              {getInitials(v.name)}
                             </div>
-                            <div className="text-[11px] uppercase tracking-wide text-slate-400">
-                              Vendor
+                            <div>
+                              {isEditing ? (
+                                <>
+                                  <input
+                                    className="border border-slate-200 rounded-md px-2 py-1 text-sm w-full mb-1"
+                                    value={editName}
+                                    onChange={(e) =>
+                                      setEditName(e.target.value)
+                                    }
+                                  />
+                                  <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                                    Vendor
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="text-sm font-medium text-slate-900">
+                                    {v.name}
+                                  </div>
+                                  <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                                    Vendor
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-5 sm:px-6 align-middle">
-                        <span className="inline-flex text-xs sm:text-sm text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
-                          {v.email}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+
+                        <td className="py-3.5 px-5 sm:px-6 align-middle">
+                          {isEditing ? (
+                            <input
+                              className="border border-slate-200 rounded-md px-2 py-1 text-sm w-full"
+                              value={editEmail}
+                              onChange={(e) => setEditEmail(e.target.value)}
+                            />
+                          ) : (
+                            <span className="inline-flex text-xs sm:text-sm text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
+                              {v.email}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-5 sm:px-6 align-middle">
+                          <div className="flex items-center justify-end gap-2">
+                            {isEditing ? (
+                              <>
+                                <button
+                                  onClick={saveEdit}
+                                  disabled={savingEdit}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
+                                >
+                                  {savingEdit ? (
+                                    <Loader2
+                                      size={14}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <Check size={14} />
+                                  )}
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                >
+                                  <X size={14} />
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => startEdit(v)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                >
+                                  <Pencil size={14} />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => deleteVendor(v._id)}
+                                  disabled={deletingId === v._id}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:opacity-60"
+                                >
+                                  {deletingId === v._id ? (
+                                    <Loader2
+                                      size={14}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <Trash2 size={14} />
+                                  )}
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
                 ) : (
                   <tr>
                     <td
-                      colSpan={2}
+                      colSpan={3}
                       className="py-10 px-5 sm:px-6 text-center text-slate-400 text-sm"
                     >
                       <div className="flex flex-col items-center gap-2">

@@ -33,7 +33,7 @@ const Sidebar = ({ view, setView, isOpen, onClose }) => {
     if (onClose) onClose()
   }
   return (
-    <aside className="fixed inset-y-0 left-0 w-60 bg-white border-r shadow-sm flex flex-col">
+    <aside className="fixed inset-y-0 left-0 w-60 bg-white shadow-sm flex flex-col">
       <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-sm">
