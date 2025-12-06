@@ -163,8 +163,8 @@ Before running this project, ensure you have:
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd rfp-management-system
+git clone https://github.com/sajalshrivastav/AerChain.git
+cd AerChain
 ```
 
 2. **Install Backend Dependencies**
@@ -412,7 +412,7 @@ curl -X POST http://localhost:5000/api/vendors \
    - Provides recommendation with reasoning
    - Considers price, delivery, warranty, and quality
 
-## � API Docuomentation
+##  API Documentation
 
 ### Vendor Management
 
@@ -829,14 +829,14 @@ For issues and questions, please open an issue on the repository.
   - Vendor proposals can have different formats
   - Easy to add new fields without migrations
   - Good for rapid prototyping
-- **Alternative Considered**: PostgreSQLejected due to rigid schema requirements)
+- **Alternative Considered**: PostgreSQL (rejected due to rigid schema requirements)
 
 **3. OpenRouter for AI Integration**
 - **Decision**: Use OpenRouter instead of direct OpenAI API
 - **Reasoning**:
   - Access to multiple models (GPT-4o, GPT-4o-mini, Claude, etc.)
   - Cost optimization by choosing appropriate model per task
-  - Fallback options if one provider hs
+  - fallback options if one provider has issues/outages.
   - Single API for multiple providers
 - **Cost Optimization**: Use GPT-4o-mini for parsing (cheaper, faster) and GPT-4o for complex generation
 
